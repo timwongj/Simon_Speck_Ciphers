@@ -1,10 +1,11 @@
 from __future__ import print_function
 from collections import deque
+import random
 
 __author__ = 'inmcm'
 
 
-class SimonCipher:
+class SimonCipher1BitDfa:
 
     # Z Arrays (stored bit reversed for easier usage)
     z0 = 0b01100111000011010100100010111110110011100001101010010001011111
@@ -312,16 +313,21 @@ class SimonCipher:
         x,y:        int of Upper and Lower ciphertext words            
         """    
         x = upper_word
-        y = lower_word
+        y = lower_word 
 
         round = 0
         # print('Number of Rounds: ', len(self.key_schedule))
-
+        # print('Last Round Key: ', hex(self.key_schedule[-1]))
 
         # Run Encryption Steps For Appropriate Number of Rounds
         for k in self.key_schedule:
             round += 1
             if round == len(self.key_schedule) - 1:
+                # Introduce fault
+                num_bits = 64
+                fault_bit = random.randint(0, num_bits - 1)
+                fault = 2 ** fault_bit
+                x = x ^ fault
                 x_t_2 = x
 
             # Generate all circular shifts
@@ -336,6 +342,13 @@ class SimonCipher:
             x = k ^ xor_2
 
         return x,y,x_t_2
+
+    def f(self, x):
+        # Generate all circular shifts
+        ls_1_x = ((x >> (self.word_size - 1)) + (x << 1)) & self.mod_mask
+        ls_8_x = ((x >> (self.word_size - 8)) + (x << 8)) & self.mod_mask
+        ls_2_x = ((x >> (self.word_size - 2)) + (x << 2)) & self.mod_mask
+        return (ls_1_x & ls_8_x) ^ ls_2_x
 
     def decrypt_function(self, upper_word, lower_word):    
         """
@@ -378,8 +391,10 @@ class SimonCipher:
                 raise
         return self.iv
 
+    def get_last_round_key(self):
+        return self.key_schedule[-1]
 
 if __name__ == "__main__":
-    w = SimonCipher(0x1918111009080100, key_size=64, block_size=32)
+    w = SimonCipher1BitDfa(0x1918111009080100, key_size=64, block_size=32)
     t = w.encrypt(0x65656877)
     print(hex(t))
