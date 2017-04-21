@@ -1,23 +1,17 @@
-# Simon_Speck_Ciphers
-Implementations of the [Speck & Simon] Block Ciphers
+# Single and Multi-bit DFA on Simon Block Cipher
+Performs Single and Multi-Bit DFA on Simon Block Ciphers with key size of 128 bits
 
-##Status
-#####Python
-- Speck Cipher Implemented
-- Simon Cipher Implemented
+### Run
 
-#####VHDL
-- Speck Cipher Implemented
-- Simon Cipher Implemented
-- AXI Bus Peripheral available for Zynq/MicroBlaze Processors
-  - Internal Clocked Version
-  - Externally Clocked Version (includes clock boundary traversal module)
-- Need to add top layer that add cipher block mode options.
+##### Single-bit DFA
 
+    python dfa_single_bit.py
 
-#####C
-- Speck Cipher Encryption Implemented
-- Simon Cipher Encryption Implemented
-- Need to Implement Decryption and Block Modes
+##### Multi-bit DFA
 
-[Speck & Simon]: http://eprint.iacr.org/2013/404
+    python dfa_multi_bit.py
+
+##### Multi-bit Number of Iterations
+
+    python dfa_iterations.py
+

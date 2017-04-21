@@ -2,8 +2,8 @@ from Python.simon import SimonCipher
 from Python.simon_1bit_dfa import SimonCipher1BitDfa
 import math
 
-def dfa_1bit():
 
+def dfa_1bit():
     key = 0xABBAABBAABBAABBAABBAABBAABBAABBA
     plaintext = 0xCCCCAAAA55553333
 
@@ -19,8 +19,8 @@ def dfa_1bit():
         iterations += 1
 
         # Encrypt with and without fault
-        simon_ciphertext, x_t_2 = my_simon.encrypt(plaintext)
-        simon_ciphertext_1bit_dfa, x_t_2_1bit_dfa = my_simon_1bit_dfa.encrypt(plaintext)
+        simon_ciphertext = my_simon.encrypt(plaintext)
+        simon_ciphertext_1bit_dfa = my_simon_1bit_dfa.encrypt(plaintext)
 
         # Extract x and y
         x = simon_ciphertext / (2 ** num_bits)
@@ -40,9 +40,4 @@ def dfa_1bit():
         solved_bits[(fault_pos - 7) % num_bits] = 1
         solved_bits[(fault_pos + 7) % num_bits] = 1
 
-    leaked_last_round_key = leaked_x_t_2 ^ my_simon_1bit_dfa.f(y) ^ x
-    last_round_key = my_simon_1bit_dfa.get_last_round_key()
-    # print bin(last_round_key)
-    # print bin(leaked_last_round_key)
-    # print iterations
     return iterations

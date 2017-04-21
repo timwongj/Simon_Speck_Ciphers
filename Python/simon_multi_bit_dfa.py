@@ -1,10 +1,11 @@
 from __future__ import print_function
 from collections import deque
+import random
 
 __author__ = 'inmcm'
 
 
-class SimonCipher:
+class SimonCipherMultiBitDfa:
 
     # Z Arrays (stored bit reversed for easier usage)
     z0 = 0b01100111000011010100100010111110110011100001101010010001011111
@@ -161,7 +162,7 @@ class SimonCipher:
 
         return y, new_x
 
-    def encrypt(self, plaintext):
+    def encrypt(self, plaintext, bits):
         """
         Process new plaintext into ciphertext based on current cipher object setup
         :param plaintext: Int representing value to encrypt
@@ -176,7 +177,7 @@ class SimonCipher:
             raise
 
         if self.mode == 'ECB':
-            b, a = self.encrypt_function(b, a)
+            b, a, = self.encrypt_function(b, a, bits)
 
         elif self.mode == 'CTR':
             true_counter = self.iv + self.counter
@@ -300,22 +301,26 @@ class SimonCipher:
 
         return plaintext
 
-
-    def encrypt_function(self, upper_word, lower_word):
-        """
-        Completes appropriate number of Simon Fiestel function to encrypt provided words
-        Round number is based off of number of elements in key schedule
-        upper_word: int of upper bytes of plaintext input 
-                    limited by word size of currently configured cipher
-        lower_word: int of lower bytes of plaintext input 
-                    limited by word size of currently configured cipher
-        x,y:        int of Upper and Lower ciphertext words            
-        """    
+    def encrypt_function(self, upper_word, lower_word, fault_bits):
         x = upper_word
-        y = lower_word
+        y = lower_word 
+
+        round = 0
 
         # Run Encryption Steps For Appropriate Number of Rounds
         for k in self.key_schedule:
+            round += 1
+
+            # Introduce faults
+            if round == len(self.key_schedule) - 1:
+                faults = [0 for j in range(0, self.word_size)]
+                while sum(faults) != fault_bits:
+                    fault_bit = random.randint(0, self.word_size - 1)
+                    if faults[fault_bit] == 0:
+                        fault = 2 ** fault_bit
+                        x = x ^ fault
+                        faults[fault_bit] = 1
+
             # Generate all circular shifts
             ls_1_x = ((x >> (self.word_size - 1)) + (x << 1)) & self.mod_mask
             ls_8_x = ((x >> (self.word_size - 8)) + (x << 8)) & self.mod_mask
@@ -328,6 +333,13 @@ class SimonCipher:
             x = k ^ xor_2
 
         return x,y
+
+    def f(self, x):
+        # Generate all circular shifts
+        ls_1_x = ((x >> (self.word_size - 1)) + (x << 1)) & self.mod_mask
+        ls_8_x = ((x >> (self.word_size - 8)) + (x << 8)) & self.mod_mask
+        ls_2_x = ((x >> (self.word_size - 2)) + (x << 2)) & self.mod_mask
+        return (ls_1_x & ls_8_x) ^ ls_2_x
 
     def decrypt_function(self, upper_word, lower_word):    
         """
@@ -370,8 +382,10 @@ class SimonCipher:
                 raise
         return self.iv
 
+    def get_last_round_key(self):
+        return self.key_schedule[-1]
 
 if __name__ == "__main__":
-    w = SimonCipher(0x1918111009080100, key_size=64, block_size=32)
-    t = w.encrypt(0x65656877)
+    w = SimonCipherMultiBitDfa(0x1918111009080100, key_size=64, block_size=32)
+    t = w.encrypt(0x65656877, 1)
     print(hex(t))

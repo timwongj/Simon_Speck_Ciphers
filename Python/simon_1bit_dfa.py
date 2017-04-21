@@ -177,7 +177,7 @@ class SimonCipher1BitDfa:
             raise
 
         if self.mode == 'ECB':
-            b, a, x_t_2 = self.encrypt_function(b, a)
+            b, a = self.encrypt_function(b, a)
 
         elif self.mode == 'CTR':
             true_counter = self.iv + self.counter
@@ -230,7 +230,7 @@ class SimonCipher1BitDfa:
 
         ciphertext = (b << self.word_size) + a
 
-        return ciphertext, x_t_2
+        return ciphertext
 
     def decrypt(self, ciphertext):
         """
@@ -303,32 +303,19 @@ class SimonCipher1BitDfa:
 
 
     def encrypt_function(self, upper_word, lower_word):
-        """
-        Completes appropriate number of Simon Fiestel function to encrypt provided words
-        Round number is based off of number of elements in key schedule
-        upper_word: int of upper bytes of plaintext input 
-                    limited by word size of currently configured cipher
-        lower_word: int of lower bytes of plaintext input 
-                    limited by word size of currently configured cipher
-        x,y:        int of Upper and Lower ciphertext words            
-        """    
         x = upper_word
-        y = lower_word 
-
+        y = lower_word
         round = 0
-        # print('Number of Rounds: ', len(self.key_schedule))
-        # print('Last Round Key: ', hex(self.key_schedule[-1]))
 
         # Run Encryption Steps For Appropriate Number of Rounds
         for k in self.key_schedule:
             round += 1
+
+            # Introduce fault
             if round == len(self.key_schedule) - 1:
-                # Introduce fault
-                num_bits = 64
-                fault_bit = random.randint(0, num_bits - 1)
+                fault_bit = random.randint(0, self.word_size - 1)
                 fault = 2 ** fault_bit
                 x = x ^ fault
-                x_t_2 = x
 
             # Generate all circular shifts
             ls_1_x = ((x >> (self.word_size - 1)) + (x << 1)) & self.mod_mask
@@ -341,7 +328,7 @@ class SimonCipher1BitDfa:
             y = x
             x = k ^ xor_2
 
-        return x,y,x_t_2
+        return x,y
 
     def f(self, x):
         # Generate all circular shifts
